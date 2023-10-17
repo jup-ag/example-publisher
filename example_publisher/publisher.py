@@ -94,7 +94,7 @@ class Publisher:
 
         filtered_symbols = self.provider.upd_products([product.symbol for product in self.products])
         if filtered_symbols:
-            self.products = filter(lambda p: p.symbol in filtered_symbols, self.products)
+            self.products = list(filter(lambda p: p.symbol in filtered_symbols, self.products))
 
 
     async def _subscribe_notify_price_sched(self):
