@@ -19,7 +19,8 @@ async def test_jupiter_works():
     config = JupiterConfig(
         base_url="https://quote-api.jup.ag/v6",
         update_interval_secs=1, 
-        products=[JupiterProduct(mint=BSOL_MINT, symbol=symbol, decimals=9)]
+        products=[JupiterProduct(mint=BSOL_MINT, symbol=symbol, decimals=9)],
+        uptime_hearbeat_url=None
     )
 
     jupiter = Jupiter(config)

@@ -1,7 +1,9 @@
 import asyncio
 from http import HTTPStatus
+import time
 from typing import Dict, List, Optional
 from structlog import get_logger
+import requests
 
 from example_publisher.provider import Price, Provider, Symbol
 from ..config import JupiterConfig, JupiterProduct
@@ -65,6 +67,7 @@ class Jupiter(Provider):
             product.symbol: product.mint for product in config.products
         }
         self._config = config
+        self._heartbeat_sender = HeartbeatSender(config.uptime_heartbeat_url)
 
     def upd_products(self, product_symbols: List[Symbol]) -> None:
         new_prices = {}
@@ -85,6 +88,7 @@ class Jupiter(Provider):
     async def _update_loop(self) -> None:
         while True:
             await self._update_prices()
+            self._heartbeat_sender.heartbeat()
             await asyncio.sleep(self._config.update_interval_secs)
 
     async def _update_prices(self) -> None:
@@ -99,3 +103,25 @@ class Jupiter(Provider):
             return None
         price = self._prices.get(id, None)
         return price
+
+class HeartbeatSender:
+    def __init__(self, uptime_heartbeat_url: Optional[str]):
+        self._uptime_heartbeat_url = uptime_heartbeat_url
+        self._last_heartbeat = 0
+
+    def heartbeat(self):
+        """Sends an heatbeat when due"""
+        if not self._uptime_heartbeat_url:
+            return
+
+        now = time.time()
+        if now - self._last_heartbeat > 10:
+            self._last_heartbeat = now
+            try:
+                r = requests.get(self._uptime_heartbeat_url, timeout=1)
+                if r.status_code == 200:
+                    log.info("Heartbeat sent")
+                else:
+                    log.warn(f"Heartbeat failed with {r.status}")
+            except Exception as e:
+                log.warn(f"Failed to send heartbeat: {e}")

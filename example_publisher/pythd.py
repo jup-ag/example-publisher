@@ -72,7 +72,7 @@ class Pythd:
         log.debug("notify_price_sched RPC call received", subscription=subscription)
         task = asyncio.get_event_loop().create_task(self.on_notify_price_sched(subscription))
         self._notify_price_sched_tasks.add(task)
-        task.add_done_callback(lambda: self._notify_price_sched_tasks.remove(task))
+        task.add_done_callback(self._notify_price_sched_tasks.discard)
 
     async def all_products(self) -> List[Product]:
         result = await self.server.get_product_list()

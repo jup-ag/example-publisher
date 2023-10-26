@@ -19,8 +19,9 @@ class Provider(ABC):
     def upd_products(self, product_symbols: List[Symbol]) -> List[Symbol] | None:
         ...
 
-    def start(self) -> None:
+    def start(self) -> asyncio.Task:
         self._update_loop_task = asyncio.create_task(self._update_loop())
+        return self._update_loop_task
 
     @abstractmethod
     async def _update_loop(self):

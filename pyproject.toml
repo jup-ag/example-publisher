@@ -26,6 +26,7 @@ pycoingecko = "^2.2.0"
 typed-settings = "2.0.2"
 pythclient = "^0.1.4,"
 jupiter-api-v-6-client = { path = "jupiter-api-v-6-client" }
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.2"

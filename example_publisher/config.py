@@ -40,6 +40,7 @@ class JupiterConfig:
     # How often to poll jupiter for price information
     update_interval_secs: int
     products: List[JupiterProduct]
+    uptime_heartbeat_url: Optional[str] = ts.option(default=None)
 
 @ts.settings
 class PythReplicatorConfig:

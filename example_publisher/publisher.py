@@ -24,6 +24,14 @@ class Product:
     exponent: int
     subscription_id: Optional[SubscriptionId]
 
+def _handle_task_result(task: asyncio.Task) -> None:
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        pass  # Task cancellation should not be logged as an error.
+    except Exception:  # pylint: disable=broad-except
+        log.exception(f'Exception raised by task = {task}')
+        exit(1)
 
 class Publisher:
     def __init__(self, config: Config) -> None:
@@ -56,7 +64,8 @@ class Publisher:
 
     async def _start_product_update_loop(self):
         await self._upd_products()
-        self.provider.start()
+        provider_task = self.provider.start()
+        provider_task.add_done_callback(_handle_task_result)
 
         while True:
             await self._upd_products()
