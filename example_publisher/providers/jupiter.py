@@ -1,7 +1,7 @@
 import asyncio
 from http import HTTPStatus
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from structlog import get_logger
 import requests
 
@@ -20,44 +20,70 @@ Id = str  # The "API id" of the price, the mint
 USD = "usd"
 USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 USDC_DECIMALS = 6
-USDC_AMOUNT = 100_000_000 # ~100 USD
+USDC_AMOUNT = 100_000_000  # ~100 USD
 
-async def get_price(client: Client, input_mint: str, output_mint: str, amount: int, input_decimals, output_decimals, is_input_quote: bool) -> Optional[float]:
+
+async def get_price_info(
+    client: Client,
+    input_mint: str,
+    output_mint: str,
+    amount: int,
+    input_decimals,
+    output_decimals,
+    is_input_quote: bool,
+) -> Optional[Tuple[float, int]]:
     response: Response[QuoteResponse] = await get_quote.asyncio_detailed(
-        client=client,
-        input_mint=input_mint,
-        output_mint=output_mint,
-        amount=amount
+        client=client, input_mint=input_mint, output_mint=output_mint, amount=amount
     )
     if response.status_code == HTTPStatus.OK:
         out_amount = int(response.parsed.out_amount)
         if is_input_quote:
-            return out_amount / amount * 10**(input_decimals - output_decimals)
+            price = amount / out_amount * 10 ** (output_decimals - input_decimals)
+            return (price, out_amount)
         else:
-            return amount / out_amount * 10**(output_decimals - input_decimals)
+            price = out_amount / amount * 10 ** (input_decimals - output_decimals)
+            return (price, out_amount)
     return None
 
-async def compute_price_from_jupiter(client: Client, product: JupiterProduct) -> Optional[Price]:
+
+async def compute_price_from_jupiter(
+    client: Client, product: JupiterProduct
+) -> Optional[Price]:
     """Only supports ticker/USD for now
     Compute buy/sell spread and use it as confidence,
-    gas is negligeable in our case assuming 0 congestion 
+    gas is negligeable in our case assuming 0 congestion
     To price the asset we take $10 of value and swap back and forth"""
-    print('before get_price')
-    buy_price = await get_price(client, product.mint, USDC, USDC_AMOUNT, product.decimals, USDC_DECIMALS, is_input_quote=True)
-    print('buy_price', buy_price)
+    (buy_price, out_amount) = await get_price_info(
+        client,
+        USDC,
+        product.mint,
+        USDC_AMOUNT,
+        USDC_DECIMALS,
+        product.decimals,
+        is_input_quote=True,
+    )
     if not buy_price:
         return None
-    sell_amount = int(USDC_AMOUNT / buy_price * 10**(product.decimals - USDC_DECIMALS))
-    print('sell_amount', sell_amount)
-    sell_price = await get_price(client, USDC, product.mint, sell_amount, USDC_DECIMALS, product.decimals, is_input_quote=False)
-    print('sell_price', sell_price)
+    (sell_price, _) = await get_price_info(
+        client,
+        product.mint,
+        USDC,
+        out_amount,
+        product.decimals,
+        USDC_DECIMALS,
+        is_input_quote=False,
+    )
     if not sell_price:
         return None
 
     mid_price = (sell_price + buy_price) / 2
     spread = abs(sell_price - buy_price) / 2
 
+    log.info(
+        f"product: {product.symbol}, buy_price: {buy_price}, sell_price: {sell_price}, {out_amount}"
+    )
     return Price(mid_price, conf=spread)
+
 
 class Jupiter(Provider):
     def __init__(self, config: JupiterConfig) -> None:
@@ -78,9 +104,7 @@ class Jupiter(Provider):
                 new_prices[mint] = self._prices.get(mint, None)
                 filtered_product_symbols.append(product.symbol)
             else:
-                raise ValueError(
-                    f"{product.symbol} not found in available products"
-                )
+                raise ValueError(f"{product.symbol} not found in available products")
 
         self._prices = new_prices
         return filtered_product_symbols
@@ -103,6 +127,7 @@ class Jupiter(Provider):
             return None
         price = self._prices.get(id, None)
         return price
+
 
 class HeartbeatSender:
     def __init__(self, uptime_heartbeat_url: Optional[str]):
