@@ -31,12 +31,19 @@ async def get_price_info(
     input_decimals,
     output_decimals,
     is_input_quote: bool,
+    log_quote_response: bool,
 ) -> Optional[Tuple[float, int]]:
     response: Response[QuoteResponse] = await get_quote.asyncio_detailed(
-        client=client, input_mint=input_mint, output_mint=output_mint, amount=amount
+        client=client,
+        input_mint=input_mint,
+        output_mint=output_mint,
+        amount=amount,
+        restrict_intermediate_tokens=True,
     )
     if response.status_code == HTTPStatus.OK:
         out_amount = int(response.parsed.out_amount)
+        if log_quote_response:
+            log.info(f"quote response: {response.parsed}")
         if is_input_quote:
             price = amount / out_amount * 10 ** (output_decimals - input_decimals)
             return (price, out_amount)
@@ -47,7 +54,7 @@ async def get_price_info(
 
 
 async def compute_price_from_jupiter(
-    client: Client, product: JupiterProduct
+    client: Client, product: JupiterProduct, log_quote_response: bool
 ) -> Optional[Price]:
     """Only supports ticker/USD for now
     Compute buy/sell spread and use it as confidence,
@@ -61,6 +68,7 @@ async def compute_price_from_jupiter(
         USDC_DECIMALS,
         product.decimals,
         is_input_quote=True,
+        log_quote_response=log_quote_response,
     )
     if not buy_price:
         return None
@@ -72,6 +80,7 @@ async def compute_price_from_jupiter(
         product.decimals,
         USDC_DECIMALS,
         is_input_quote=False,
+        log_quote_response=log_quote_response,
     )
     if not sell_price:
         return None
@@ -94,6 +103,7 @@ class Jupiter(Provider):
         }
         self._config = config
         self._heartbeat_sender = HeartbeatSender(config.uptime_heartbeat_url)
+        self._last_quote_response_log = 0
 
     def upd_products(self, product_symbols: List[Symbol]) -> None:
         new_prices = {}
@@ -116,8 +126,15 @@ class Jupiter(Provider):
             await asyncio.sleep(self._config.update_interval_secs)
 
     async def _update_prices(self) -> None:
+        now = time.time()
+        log_quote_response = False
+        if now - self._last_quote_response_log > 10:
+            self._last_quote_response_log = now
+            log_quote_response = True
         for product in self._config.products:
-            price = await compute_price_from_jupiter(self._api_client, product)
+            price = await compute_price_from_jupiter(
+                self._api_client, product, log_quote_response
+            )
             self._prices[product.mint] = price
         log.info("updated prices from Jupiter", prices=self._prices)
 

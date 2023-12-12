@@ -13,8 +13,6 @@ def _get_kwargs(
     *,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
 ) -> Dict[str, Any]:
-    pass
-
     params: Dict[str, Any] = {}
     params["onlyDirectRoutes"] = only_direct_routes
 

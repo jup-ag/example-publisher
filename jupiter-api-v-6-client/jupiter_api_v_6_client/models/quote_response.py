@@ -124,7 +124,7 @@ class QuoteResponse:
 
         _platform_fee = d.pop("platformFee", UNSET)
         platform_fee: Union[Unset, PlatformFee]
-        if not _platform_fee or isinstance(_platform_fee, Unset):
+        if isinstance(_platform_fee, Unset):
             platform_fee = UNSET
         else:
             platform_fee = PlatformFee.from_dict(_platform_fee)

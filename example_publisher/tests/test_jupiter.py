@@ -19,6 +19,7 @@ async def test_get_price():
         input_decimals=6,
         output_decimals=9,
         is_input_quote=True,
+        log_quote_response=True,
     )
     print(price_info)
     assert price_info

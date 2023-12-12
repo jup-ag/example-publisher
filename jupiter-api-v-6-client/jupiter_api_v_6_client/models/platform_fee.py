@@ -36,6 +36,8 @@ class PlatformFee:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+        return
+
         d = src_dict.copy()
         amount = d.pop("amount", UNSET)
 

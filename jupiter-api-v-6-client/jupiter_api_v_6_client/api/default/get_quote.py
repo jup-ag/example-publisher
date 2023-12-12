@@ -5,7 +5,6 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_quote_exclude_dexes_item import GetQuoteExcludeDexesItem
 from ...models.get_quote_swap_mode import GetQuoteSwapMode
 from ...models.quote_response import QuoteResponse
 from ...types import UNSET, Response, Unset
@@ -18,14 +17,14 @@ def _get_kwargs(
     amount: int,
     slippage_bps: Union[Unset, None, int] = UNSET,
     swap_mode: Union[Unset, None, GetQuoteSwapMode] = UNSET,
-    exclude_dexes: Union[Unset, None, List[GetQuoteExcludeDexesItem]] = UNSET,
+    dexes: Union[Unset, None, List[str]] = UNSET,
+    exclude_dexes: Union[Unset, None, List[str]] = UNSET,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
+    restrict_intermediate_tokens: Union[Unset, None, bool] = UNSET,
     as_legacy_transaction: Union[Unset, None, bool] = UNSET,
     platform_fee_bps: Union[Unset, None, int] = UNSET,
     max_accounts: Union[Unset, None, int] = UNSET,
 ) -> Dict[str, Any]:
-    pass
-
     params: Dict[str, Any] = {}
     params["inputMint"] = input_mint
 
@@ -41,20 +40,27 @@ def _get_kwargs(
 
     params["swapMode"] = json_swap_mode
 
+    json_dexes: Union[Unset, None, List[str]] = UNSET
+    if not isinstance(dexes, Unset):
+        if dexes is None:
+            json_dexes = None
+        else:
+            json_dexes = dexes
+
+    params["dexes"] = json_dexes
+
     json_exclude_dexes: Union[Unset, None, List[str]] = UNSET
     if not isinstance(exclude_dexes, Unset):
         if exclude_dexes is None:
             json_exclude_dexes = None
         else:
-            json_exclude_dexes = []
-            for exclude_dexes_item_data in exclude_dexes:
-                exclude_dexes_item = exclude_dexes_item_data.value
-
-                json_exclude_dexes.append(exclude_dexes_item)
+            json_exclude_dexes = exclude_dexes
 
     params["excludeDexes"] = json_exclude_dexes
 
     params["onlyDirectRoutes"] = only_direct_routes
+
+    params["restrictIntermediateTokens"] = restrict_intermediate_tokens
 
     params["asLegacyTransaction"] = as_legacy_transaction
 
@@ -71,7 +77,9 @@ def _get_kwargs(
     }
 
 
-def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[QuoteResponse]:
+def _parse_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Optional[QuoteResponse]:
     if response.status_code == HTTPStatus.OK:
         response_200 = QuoteResponse.from_dict(response.json())
 
@@ -82,7 +90,9 @@ def _parse_response(*, client: Union[AuthenticatedClient, Client], response: htt
         return None
 
 
-def _build_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Response[QuoteResponse]:
+def _build_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Response[QuoteResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -99,8 +109,10 @@ def sync_detailed(
     amount: int,
     slippage_bps: Union[Unset, None, int] = UNSET,
     swap_mode: Union[Unset, None, GetQuoteSwapMode] = UNSET,
-    exclude_dexes: Union[Unset, None, List[GetQuoteExcludeDexesItem]] = UNSET,
+    dexes: Union[Unset, None, List[str]] = UNSET,
+    exclude_dexes: Union[Unset, None, List[str]] = UNSET,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
+    restrict_intermediate_tokens: Union[Unset, None, bool] = UNSET,
     as_legacy_transaction: Union[Unset, None, bool] = UNSET,
     platform_fee_bps: Union[Unset, None, int] = UNSET,
     max_accounts: Union[Unset, None, int] = UNSET,
@@ -115,8 +127,10 @@ def sync_detailed(
         amount (int):
         slippage_bps (Union[Unset, None, int]):
         swap_mode (Union[Unset, None, GetQuoteSwapMode]):
-        exclude_dexes (Union[Unset, None, List[GetQuoteExcludeDexesItem]]):
+        dexes (Union[Unset, None, List[str]]):
+        exclude_dexes (Union[Unset, None, List[str]]):
         only_direct_routes (Union[Unset, None, bool]):
+        restrict_intermediate_tokens (Union[Unset, None, bool]):
         as_legacy_transaction (Union[Unset, None, bool]):
         platform_fee_bps (Union[Unset, None, int]):
         max_accounts (Union[Unset, None, int]):
@@ -135,8 +149,10 @@ def sync_detailed(
         amount=amount,
         slippage_bps=slippage_bps,
         swap_mode=swap_mode,
+        dexes=dexes,
         exclude_dexes=exclude_dexes,
         only_direct_routes=only_direct_routes,
+        restrict_intermediate_tokens=restrict_intermediate_tokens,
         as_legacy_transaction=as_legacy_transaction,
         platform_fee_bps=platform_fee_bps,
         max_accounts=max_accounts,
@@ -157,8 +173,10 @@ def sync(
     amount: int,
     slippage_bps: Union[Unset, None, int] = UNSET,
     swap_mode: Union[Unset, None, GetQuoteSwapMode] = UNSET,
-    exclude_dexes: Union[Unset, None, List[GetQuoteExcludeDexesItem]] = UNSET,
+    dexes: Union[Unset, None, List[str]] = UNSET,
+    exclude_dexes: Union[Unset, None, List[str]] = UNSET,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
+    restrict_intermediate_tokens: Union[Unset, None, bool] = UNSET,
     as_legacy_transaction: Union[Unset, None, bool] = UNSET,
     platform_fee_bps: Union[Unset, None, int] = UNSET,
     max_accounts: Union[Unset, None, int] = UNSET,
@@ -173,8 +191,10 @@ def sync(
         amount (int):
         slippage_bps (Union[Unset, None, int]):
         swap_mode (Union[Unset, None, GetQuoteSwapMode]):
-        exclude_dexes (Union[Unset, None, List[GetQuoteExcludeDexesItem]]):
+        dexes (Union[Unset, None, List[str]]):
+        exclude_dexes (Union[Unset, None, List[str]]):
         only_direct_routes (Union[Unset, None, bool]):
+        restrict_intermediate_tokens (Union[Unset, None, bool]):
         as_legacy_transaction (Union[Unset, None, bool]):
         platform_fee_bps (Union[Unset, None, int]):
         max_accounts (Union[Unset, None, int]):
@@ -194,8 +214,10 @@ def sync(
         amount=amount,
         slippage_bps=slippage_bps,
         swap_mode=swap_mode,
+        dexes=dexes,
         exclude_dexes=exclude_dexes,
         only_direct_routes=only_direct_routes,
+        restrict_intermediate_tokens=restrict_intermediate_tokens,
         as_legacy_transaction=as_legacy_transaction,
         platform_fee_bps=platform_fee_bps,
         max_accounts=max_accounts,
@@ -210,8 +232,10 @@ async def asyncio_detailed(
     amount: int,
     slippage_bps: Union[Unset, None, int] = UNSET,
     swap_mode: Union[Unset, None, GetQuoteSwapMode] = UNSET,
-    exclude_dexes: Union[Unset, None, List[GetQuoteExcludeDexesItem]] = UNSET,
+    dexes: Union[Unset, None, List[str]] = UNSET,
+    exclude_dexes: Union[Unset, None, List[str]] = UNSET,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
+    restrict_intermediate_tokens: Union[Unset, None, bool] = UNSET,
     as_legacy_transaction: Union[Unset, None, bool] = UNSET,
     platform_fee_bps: Union[Unset, None, int] = UNSET,
     max_accounts: Union[Unset, None, int] = UNSET,
@@ -226,8 +250,10 @@ async def asyncio_detailed(
         amount (int):
         slippage_bps (Union[Unset, None, int]):
         swap_mode (Union[Unset, None, GetQuoteSwapMode]):
-        exclude_dexes (Union[Unset, None, List[GetQuoteExcludeDexesItem]]):
+        dexes (Union[Unset, None, List[str]]):
+        exclude_dexes (Union[Unset, None, List[str]]):
         only_direct_routes (Union[Unset, None, bool]):
+        restrict_intermediate_tokens (Union[Unset, None, bool]):
         as_legacy_transaction (Union[Unset, None, bool]):
         platform_fee_bps (Union[Unset, None, int]):
         max_accounts (Union[Unset, None, int]):
@@ -246,8 +272,10 @@ async def asyncio_detailed(
         amount=amount,
         slippage_bps=slippage_bps,
         swap_mode=swap_mode,
+        dexes=dexes,
         exclude_dexes=exclude_dexes,
         only_direct_routes=only_direct_routes,
+        restrict_intermediate_tokens=restrict_intermediate_tokens,
         as_legacy_transaction=as_legacy_transaction,
         platform_fee_bps=platform_fee_bps,
         max_accounts=max_accounts,
@@ -266,8 +294,10 @@ async def asyncio(
     amount: int,
     slippage_bps: Union[Unset, None, int] = UNSET,
     swap_mode: Union[Unset, None, GetQuoteSwapMode] = UNSET,
-    exclude_dexes: Union[Unset, None, List[GetQuoteExcludeDexesItem]] = UNSET,
+    dexes: Union[Unset, None, List[str]] = UNSET,
+    exclude_dexes: Union[Unset, None, List[str]] = UNSET,
     only_direct_routes: Union[Unset, None, bool] = UNSET,
+    restrict_intermediate_tokens: Union[Unset, None, bool] = UNSET,
     as_legacy_transaction: Union[Unset, None, bool] = UNSET,
     platform_fee_bps: Union[Unset, None, int] = UNSET,
     max_accounts: Union[Unset, None, int] = UNSET,
@@ -282,8 +312,10 @@ async def asyncio(
         amount (int):
         slippage_bps (Union[Unset, None, int]):
         swap_mode (Union[Unset, None, GetQuoteSwapMode]):
-        exclude_dexes (Union[Unset, None, List[GetQuoteExcludeDexesItem]]):
+        dexes (Union[Unset, None, List[str]]):
+        exclude_dexes (Union[Unset, None, List[str]]):
         only_direct_routes (Union[Unset, None, bool]):
+        restrict_intermediate_tokens (Union[Unset, None, bool]):
         as_legacy_transaction (Union[Unset, None, bool]):
         platform_fee_bps (Union[Unset, None, int]):
         max_accounts (Union[Unset, None, int]):
@@ -304,8 +336,10 @@ async def asyncio(
             amount=amount,
             slippage_bps=slippage_bps,
             swap_mode=swap_mode,
+            dexes=dexes,
             exclude_dexes=exclude_dexes,
             only_direct_routes=only_direct_routes,
+            restrict_intermediate_tokens=restrict_intermediate_tokens,
             as_legacy_transaction=as_legacy_transaction,
             platform_fee_bps=platform_fee_bps,
             max_accounts=max_accounts,
