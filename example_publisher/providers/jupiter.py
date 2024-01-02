@@ -60,7 +60,7 @@ async def compute_price_from_jupiter(
     Compute buy/sell spread and use it as confidence,
     gas is negligeable in our case assuming 0 congestion
     To price the asset we take $10 of value and swap back and forth"""
-    (buy_price, out_amount) = await get_price_info(
+    buy_price_and_out_amount = await get_price_info(
         client,
         USDC,
         product.mint,
@@ -70,9 +70,11 @@ async def compute_price_from_jupiter(
         is_input_quote=True,
         log_quote_response=log_quote_response,
     )
-    if not buy_price:
+    if not buy_price_and_out_amount:
         return None
-    (sell_price, _) = await get_price_info(
+    (buy_price, out_amount) = buy_price_and_out_amount
+
+    sell_price_and_out_amount = await get_price_info(
         client,
         product.mint,
         USDC,
@@ -82,8 +84,9 @@ async def compute_price_from_jupiter(
         is_input_quote=False,
         log_quote_response=log_quote_response,
     )
-    if not sell_price:
+    if not sell_price_and_out_amount:
         return None
+    (sell_price, out_amount) = sell_price_and_out_amount
 
     mid_price = (sell_price + buy_price) / 2
     spread = abs(sell_price - buy_price) / 2
