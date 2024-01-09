@@ -99,7 +99,7 @@ async def compute_price_from_jupiter(
 
 class Jupiter(Provider):
     def __init__(self, config: JupiterConfig) -> None:
-        self._api_client: Client = Client(base_url=config.base_url)
+        self._api_client: Client = Client(base_url=config.base_url, timeout=5.0)
         self._prices: Dict[Id, Price | None] = {}
         self._symbol_to_id: Dict[Symbol, Id] = {
             product.symbol: product.mint for product in config.products

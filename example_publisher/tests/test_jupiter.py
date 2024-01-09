@@ -10,7 +10,7 @@ BSOL_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
 
 @pytest.mark.asyncio
 async def test_get_price():
-    client = Client(base_url="https://quote-api.jup.ag/v6")
+    client = Client(base_url="https://quote-api.jup.ag/v6", timeout=5.0)
     price_info = await get_price_info(
         client,
         input_mint=USDC,
