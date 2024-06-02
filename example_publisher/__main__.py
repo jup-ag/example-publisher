@@ -25,13 +25,13 @@ log = structlog.get_logger()
     help="Location of config file.",
 )
 def main(config_path):
-
     config = ts.load(
         cls=Config,
         appname="publisher",
         config_files=[config_path],
     )
 
+    log.info("Starting pyth publisher")
     publisher = Publisher(config=config)
 
     async def run():

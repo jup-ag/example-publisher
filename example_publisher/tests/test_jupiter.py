@@ -1,0 +1,44 @@
+import asyncio
+
+from jupiter_api_v_6_client.client import Client
+from ..config import JupiterConfig, JupiterProduct
+from example_publisher.providers.jupiter import USDC, Jupiter, get_price_info
+import pytest
+
+BSOL_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
+
+
+@pytest.mark.asyncio
+async def test_get_price():
+    client = Client(base_url="https://quote-api.jup.ag/v6", timeout=5.0)
+    price_info = await get_price_info(
+        client,
+        input_mint=USDC,
+        output_mint=BSOL_MINT,
+        amount=100_000_000,
+        input_decimals=6,
+        output_decimals=9,
+        is_input_quote=True,
+        log_quote_response=True,
+    )
+    print(price_info)
+    assert price_info
+
+
+@pytest.mark.asyncio
+async def test_jupiter_works():
+    symbol = "Crypto.BSOL/USD"
+    config = JupiterConfig(
+        base_url="https://quote-api.jup.ag/v6",
+        update_interval_secs=1,
+        products=[JupiterProduct(mint=BSOL_MINT, symbol=symbol, decimals=9)],
+        # uptime_hearbeat_url=None,
+    )
+
+    jupiter = Jupiter(config)
+    jupiter.start()
+
+    await asyncio.sleep(1)
+
+    latest_price = jupiter.latest_price(symbol)
+    print(f"latest_price: {latest_price}")

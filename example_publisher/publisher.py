@@ -1,6 +1,7 @@
 import asyncio
 from typing import Dict, List, Optional
 from attr import define
+from example_publisher.providers.jupiter import Jupiter
 from structlog import get_logger
 from example_publisher.provider import Provider
 
@@ -23,10 +24,19 @@ class Product:
     exponent: int
     subscription_id: Optional[SubscriptionId]
 
+def _handle_task_result(task: asyncio.Task) -> None:
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        pass  # Task cancellation should not be logged as an error.
+    except Exception:  # pylint: disable=broad-except
+        log.exception(f'Exception raised by task = {task}')
+        exit(1)
 
 class Publisher:
     def __init__(self, config: Config) -> None:
         self.config: Config = config
+        self._product_update_task: asyncio.Task | None = None
 
         if not getattr(self.config, self.config.provider_engine):
             raise ValueError(f"Missing {self.config.provider_engine} config")
@@ -35,6 +45,8 @@ class Publisher:
             self.provider = CoinGecko(config.coin_gecko)
         elif self.config.provider_engine == "pyth_replicator":
             self.provider: Provider = PythReplicator(config.pyth_replicator)
+        elif self.config.provider_engine == "jupiter":
+            self.provider: Provider = Jupiter(config.jupiter)
         else:
             raise ValueError(f"Unknown provider {self.config.provider_engine}")
 
@@ -48,11 +60,12 @@ class Publisher:
     async def start(self):
         await self.pythd.connect()
 
-        asyncio.create_task(self._start_product_update_loop())
+        self._product_update_task = asyncio.create_task(self._start_product_update_loop())
 
     async def _start_product_update_loop(self):
         await self._upd_products()
-        self.provider.start()
+        provider_task = self.provider.start()
+        provider_task.add_done_callback(_handle_task_result)
 
         while True:
             await self._upd_products()
@@ -89,7 +102,10 @@ class Publisher:
                 )
             )
 
-        self.provider.upd_products([product.symbol for product in self.products])
+        filtered_symbols = self.provider.upd_products([product.symbol for product in self.products])
+        if filtered_symbols:
+            self.products = list(filter(lambda p: p.symbol in filtered_symbols, self.products))
+
 
     async def _subscribe_notify_price_sched(self):
         # Subscribe to Pythd's notify_price_sched for each product that

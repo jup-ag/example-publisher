@@ -26,6 +26,23 @@ class CoinGeckoConfig:
 
 
 @ts.settings
+class JupiterProduct:
+    # Symbol name. e.g., Crypto.BTC/USD
+    symbol: str
+    # The base58 mint
+    mint: str
+    decimals: int
+
+
+@ts.settings
+class JupiterConfig:
+    base_url: str
+    # How often to poll jupiter for price information
+    update_interval_secs: int
+    products: List[JupiterProduct]
+    uptime_heartbeat_url: Optional[str] = ts.option(default=None)
+
+@ts.settings
 class PythReplicatorConfig:
     http_endpoint: str
     ws_endpoint: str
@@ -50,3 +67,4 @@ class Config:
     product_update_interval_secs: int = ts.option(default=60)
     coin_gecko: Optional[CoinGeckoConfig] = ts.option(default=None)
     pyth_replicator: Optional[PythReplicatorConfig] = ts.option(default=None)
+    jupiter: Optional[JupiterConfig] = ts.option(default=None)
